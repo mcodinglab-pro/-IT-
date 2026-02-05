@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>엠코딩랩 | IT 경시대회 모의고사 4세트(심화)</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Malgun Gothic', sans-serif; background: #e9ecef; padding: 20px; line-height: 1.6; }
+        .container { max-width: 850px; margin: 0 auto; }
+        .header { background: #1a3a5f; color: white; border-radius: 15px; padding: 30px; text-align: center; margin-bottom: 25px; }
+        .header h1 { font-size: 26px; margin-bottom: 5px; }
+        .header p { font-size: 15px; opacity: 0.9; }
+        .student-info { background: white; border-radius: 15px; padding: 20px; margin-bottom: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+        .input-group { display: flex; gap: 12px; flex-wrap: wrap; }
+        .input-group input { flex: 1; min-width: 180px; padding: 14px; border: 1px solid #ced4da; border-radius: 10px; font-size: 16px; }
+        .problem-card { background: white; border-radius: 15px; padding: 25px; margin-bottom: 25px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); position: relative; }
+        .problem-num { display: inline-block; background: #1a3a5f; color: white; padding: 5px 15px; border-radius: 20px; font-weight: bold; margin-bottom: 15px; font-size: 14px; }
+        .problem-text { font-weight: bold; margin-bottom: 15px; color: #212529; font-size: 17px; }
+        .code-block { background: #1e1e1e; color: #dcdcdc; padding: 18px; border-radius: 10px; font-family: 'Consolas', 'Courier New', monospace; font-size: 14px; margin-bottom: 20px; white-space: pre-wrap; line-height: 1.5; border-left: 5px solid #1a3a5f; }
+        .options { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 10px; }
+        .option-btn { background: #f8f9fa; border: 2px solid #dee2e6; padding: 12px; border-radius: 10px; cursor: pointer; text-align: left; transition: all 0.2s; font-size: 15px; }
+        .option-btn:hover { border-color: #1a3a5f; background: #eef2f7; }
+        .option-btn.selected { background: #1a3a5f; color: white; border-color: #1a3a5f; font-weight: bold; }
+        .short-answer { width: 100%; padding: 15px; border: 2px solid #1a3a5f; border-radius: 10px; font-size: 18px; font-weight: bold; text-align: center; color: #1a3a5f; }
+        .submit-section { text-align: center; padding: 50px 0; }
+        .submit-btn { background: #1a3a5f; color: white; border: none; padding: 18px 80px; font-size: 20px; font-weight: bold; border-radius: 40px; cursor: pointer; transition: transform 0.2s; box-shadow: 0 6px 15px rgba(26, 58, 95, 0.3); }
+        .submit-btn:hover { transform: translateY(-3px); }
+        .submit-btn:disabled { background: #adb5bd; cursor: not-allowed; transform: none; }
+        .result-section { background: white; border-radius: 20px; padding: 40px; text-align: center; display: none; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
+        .timer { position: fixed; top: 20px; right: 20px; background: white; padding: 12px 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); font-weight: bold; color: #1a3a5f; z-index: 100; font-size: 20px; border: 2px solid #1a3a5f; }
+    </style>
+</head>
+<body>
+    <div class="timer" id="timer">⏱️ 00:00</div>
+    <div class="container">
+        <div class="header">
+            <h1>2025 청소년 IT 경시대회 모의고사 (심화)</h1>
+            <p>MCODINGLAB | 제4세트 알고리즘 집중 부문</p>
+        </div>
+        <div class="student-info">
+            <div class="input-group">
+                <input type="text" id="studentName" placeholder="이름" required>
+                <input type="text" id="birthDate" placeholder="생년월일 (예: 120101)" maxlength="6">
+            </div>
+        </div>
+        <div id="quizContainer"></div>
+        <div class="submit-section">
+            <button class="submit-btn" id="submitBtn" onclick="submitQuiz()">모의고사 4세트 제출</button>
+        </div>
+        <div class="result-section" id="resultSection">
+            <h2 style="color:#1a3a5f">심화 모의고사 제출 완료</h2>
+            <div style="font-size: 64px; margin: 25px 0; font-weight: 800; color: #1a3a5f;" id="scoreDisplay">0점</div>
+            <p style="color:#666">고난도 알고리즘 테스트 결과가 성공적으로 전송되었습니다.</p>
+        </div>
+    </div>
+
+    <script>
+        const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycby_oiE0oUvw7tlN56QTzH0yU2z0FsIlbic8ZJdn12WcbLN3ETcDE8KcGKe_RoXONxLc/exec';
+
+        const problems = [
+            { id: 1, q: "실행 결과는?", code: "a = 0b11010\nb = 0o32\nc = 0x1A\nprint(a == b, b == c)", type: "choice", opts: ["True True", "True False", "False True", "False False", "오류"], ans: "1" },
+            { id: 2, q: "실행 결과는?", code: "a = [1, 2, [3, 4, [5, 6]]]\nprint(a[2][2][0] + a[2][1])", type: "choice", opts: ["7", "8", "9", "10", "11"], ans: "3" },
+            { id: 3, q: "실행 결과는?", code: "def f(x, y=[]):\n    y.append(x)\n    return len(y)\nprint(f(1) + f(2) + f(3))", type: "choice", opts: ["3", "6", "9", "12", "오류"], ans: "2" },
+            { id: 4, q: "실행 결과는?", code: "a = 123456789\ncnt = 0\nwhile a > 0:\n    if a % 10 % 2 == 1:\n        cnt += 1\n    a //= 10\nprint(cnt)", type: "choice", opts: ["3", "4", "5", "6", "9"], ans: "3" },
+            { id: 5, q: "실행 결과는?", code: 'a = "abracadabra"\nb = {}\nfor c in a:\n    b[c] = b.get(c, 0) + 1\nprint(max(b.values()) - min(b.values()))', type: "choice", opts: ["2", "3", "4", "5", "6"], ans: "3" },
+            { id: 6, q: "실행 결과는?", code: "def f(n, k, memo={}):\n    if (n, k) in memo: return memo[(n, k)]\n    if k == 0 or k == n: return 1\n    memo[(n, k)] = f(n-1, k-1) + f(n-1, k)\n    return memo[(n, k)]\nprint(f(10, 4))", type: "choice", opts: ["120", "210", "252", "330", "462"], ans: "2" },
+            { id: 7, q: "실행 결과는?", code: "def f(n):\n    if n <= 1: return n\n    a, b = 0, 1\n    for _ in range(n - 1):\n        a, b = b, a + b\n    return b\nprint(f(15) % 100)", type: "choice", opts: ["10", "17", "34", "55", "89"], ans: "1" },
+            { id: 8, q: "실행 결과는?", code: "a = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]\nb = [[a[j][i] for j in range(3)] for i in range(3)]\ns = 0\nfor i in range(3):\n    s += b[i][i] + b[i][2-i]\nprint(s - 5)", type: "choice", opts: ["20", "25", "30", "35", "40"], ans: "2" },
+            { id: 9, q: "실행 결과는?", code: "def gcd(a, b):\n    while b: a, b = b, a % b\n    return a\ndef lcm(a, b):\n    return a * b // gcd(a, b)\nresult = 1\nfor i in range(1, 7):\n    result = lcm(result, i)\nprint(result)", type: "choice", opts: ["30", "60", "120", "360", "720"], ans: "2" },
+            { id: 10, q: "실행 결과는?", code: "def solve(n, start, end, via):\n    if n == 1: return 1\n    return solve(n-1, start, via, end) + 1 + solve(n-1, via, end, start)\nprint(solve(6, 'A', 'C', 'B'))", type: "choice", opts: ["31", "32", "63", "64", "127"], ans: "3" },
+            { id: 11, q: "실행 결과는?", code: "from functools import reduce\na = [2, 3, 5, 7, 11]\nresult = reduce(lambda x, y: x * y, a)\nprint(result % 1000)", type: "choice", opts: ["210", "231", "310", "330", "510"], ans: "3" },
+            { id: 12, q: "실행 결과는?", code: "def f(arr):\n    n = len(arr)\n    for i in range(n // 2 - 1, -1, -1):\n        j = i\n        while 2 * j + 1 < n:\n            k = 2 * j + 1\n            if k + 1 < n and arr[k] < arr[k + 1]: k += 1\n            if arr[j] >= arr[k]: break\n            arr[j], arr[k] = arr[k], arr[j]\n            j = k\na = [4, 1, 3, 2, 5, 6]\nf(a)\nprint(a[0], a[1])", type: "choice", opts: ["6 4", "6 5", "5 4", "5 6", "4 6"], ans: "2" },
+            { id: 13, q: "실행 결과는?", code: "def f(n, m, dp):\n    if dp[n][m] != -1: return dp[n][m]\n    if n == 0 or m == 0: dp[n][m] = 1; return 1\n    dp[n][m] = f(n-1, m, dp) + f(n, m-1, dp)\n    return dp[n][m]\ndp = [[-1] * 6 for _ in range(6)]\nprint(f(4, 5, dp))", type: "choice", opts: ["56", "84", "126", "210", "252"], ans: "3" },
+            { id: 14, q: "실행 결과는?", code: "def dfs(graph, v, visited, order):\n    visited.add(v); order.append(v)\n    for n in sorted(graph[v]):\n        if n not in visited: dfs(graph, n, visited, order)\n    return order\ng = {1: [2, 3, 4], 2: [1, 5], 3: [1, 6, 7], 4: [1], 5: [2], 6: [3], 7: [3]}\nresult = dfs(g, 1, set(), [])\nprint(result[5])", type: "choice", opts: ["4", "5", "6", "7", "3"], ans: "4" },
+            { id: 15, q: "실행 결과는?", code: "def merge_sort(arr):\n    if len(arr) <= 1: return arr, 0\n    mid = len(arr) // 2\n    left, c1 = merge_sort(arr[:mid])\n    right, c2 = merge_sort(arr[mid:])\n    merged, c3 = merge(left, right)\n    return merged, c1 + c2 + c3\ndef merge(left, right):\n    res, cnt, i, j = [], 0, 0, 0\n    while i < len(left) and j < len(right):\n        if left[i] <= right[j]: res.append(left[i]); i += 1\n        else: res.append(right[j]); cnt += len(left) - i; j += 1\n    res.extend(left[i:]); res.extend(right[j:])\n    return res, cnt\narr = [3, 1, 2, 5, 4]\n_, inv = merge_sort(arr)\nprint(inv)", type: "choice", opts: ["2", "3", "4", "5", "6"], ans: "2" },
+            { id: 16, q: "실행 결과는?", code: "class Node:\n    def __init__(self, val):\n        self.val = val; self.left = None; self.right = None\ndef insert(root, val):\n    if root is None: return Node(val)\n    if val < root.val: root.left = insert(root.left, val)\n    else: root.right = insert(root.right, val)\n    return root\ndef height(root):\n    if root is None: return 0\n    return 1 + max(height(root.left), height(root.right))\nroot = None\nfor v in [5, 3, 7, 2, 4, 6, 8, 1]: root = insert(root, v)\nprint(height(root))", type: "choice", opts: ["3", "4", "5", "6", "8"], ans: "2" },
+            { id: 17, q: "실행 결과는?", code: "def solve(n, weights, values, W, memo={}):\n    if (n, W) in memo: return memo[(n, W)]\n    if n == 0 or W == 0: return 0\n    if weights[n-1] > W: result = solve(n-1, weights, values, W)\n    else: result = max(solve(n-1, weights, values, W), values[n-1] + solve(n-1, weights, values, W - weights[n-1]))\n    memo[(n, W)] = result; return result\nw, v = [2, 3, 4, 5], [3, 4, 5, 6]\nprint(solve(4, w, v, 8))", type: "choice", opts: ["9", "10", "11", "12", "13"], ans: "2" },
+            { id: 18, q: "실행 결과는?", code: 'def f(s, memo={}):\n    if s in memo: return memo[s]\n    if len(s) <= 1: return True\n    if s[0] != s[-1]: memo[s] = False; return False\n    memo[s] = f(s[1:-1]); return memo[s]\nwords = ["level", "hello", "radar", "world", "civic"]\ncnt = sum(1 for w in words if f(w))\nprint(cnt)', type: "choice", opts: ["1", "2", "3", "4", "5"], ans: "3" },
+            { id: 19, q: "실행 결과는?", code: "def solve(board, row, n, cnt):\n    if row == n: return cnt + 1\n    for col in range(n):\n        safe = True\n        for r in range(row):\n            if board[r] == col or abs(board[r] - col) == row - r:\n                safe = False; break\n        if safe: board[row] = col; cnt = solve(board, row + 1, n, cnt)\n    return cnt\nprint(solve([0]*6, 0, 6, 0))", type: "choice", opts: ["1", "2", "4", "8", "10"], ans: "3" },
+            { id: 20, q: "실행 결과로 올바른 값을 작성하시오.", code: "def lis(arr):\n    n = len(arr); dp = [1] * n\n    for i in range(1, n):\n        for j in range(i):\n            if arr[j] < arr[i]: dp[i] = max(dp[i], dp[j] + 1)\n    return max(dp)\na = [3, 1, 4, 1, 5, 9, 2, 6, 5, 3, 5]\nprint(lis(a))", type: "short", ans: "4" }
+        ];
+
+        let userAnswers = {};
+        let startTime = Date.now();
+
+        function renderQuiz() {
+            const container = document.getElementById('quizContainer');
+            problems.forEach(p => {
+                const card = document.createElement('div');
+                card.className = 'problem-card';
+                let html = `<div class="problem-num">심화 문항 ${p.id}</div><div class="problem-text">${p.q}</div>`;
+                if(p.code) html += `<div class="code-block">${p.code}</div>`;
+                
+                if(p.type === 'choice') {
+                    html += `<div class="options">`;
+                    p.opts.forEach((opt, idx) => {
+                        html += `<button class="option-btn" id="p${p.id}_o${idx+1}" onclick="selectOption(${p.id}, ${idx+1})">${idx+1}. ${opt}</button>`;
+                    });
+                    html += `</div>`;
+                } else {
+                    html += `<input type="text" class="short-answer" id="p${p.id}_ans" placeholder="정답 입력" oninput="saveShort(${p.id}, this.value)">`;
+                }
+                card.innerHTML = html;
+                container.appendChild(card);
+            });
+        }
+
+        function selectOption(probId, optIdx) {
+            problems[probId-1].opts.forEach((_, i) => {
+                const el = document.getElementById(`p${probId}_o${i+1}`);
+                if(el) el.classList.remove('selected');
+            });
+            document.getElementById(`p${probId}_o${optIdx}`).classList.add('selected');
+            userAnswers[probId] = String(optIdx);
+        }
+
+        function saveShort(probId, val) {
+            userAnswers[probId] = val.trim();
+        }
+
+        async function submitQuiz() {
+            const name = document.getElementById('studentName').value;
+            const birth = document.getElementById('birthDate').value;
+            if(!name || !birth) return alert("이름과 생년월일을 입력해 주세요.");
+
+            let correct = 0;
+            let details = [];
+            problems.forEach(p => {
+                const isCorrect = userAnswers[p.id] === p.ans;
+                if(isCorrect) correct++;
+                details.push({ id: p.id, isCorrect: isCorrect });
+            });
+
+            const score = Math.round((correct / problems.length) * 100);
+            const elapsed = Math.floor((Date.now() - startTime) / 1000);
+            const timeStr = `${Math.floor(elapsed/60)}분 ${elapsed%60}초`;
+
+            const result = {
+                timestamp: new Date().toLocaleString('ko-KR'),
+                name: name,
+                birthDate: birth,
+                score: score,
+                time: timeStr,
+                details: details
+            };
+
+            const btn = document.getElementById('submitBtn');
+            btn.disabled = true;
+            btn.textContent = "결과 전송 중...";
+
+            try {
+                await fetch(WEB_APP_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(result) });
+            } catch(e) { console.error(e); }
+
+            document.getElementById('scoreDisplay').textContent = score + "점";
+            document.getElementById('quizContainer').style.display = 'none';
+            document.getElementById('studentName').parentNode.parentNode.style.display = 'none';
+            document.getElementById('resultSection').style.display = 'block';
+        }
+
+        setInterval(() => {
+            const sec = Math.floor((Date.now() - startTime) / 1000);
+            document.getElementById('timer').textContent = `⏱️ ${Math.floor(sec/60).toString().padStart(2,'0')}:${(sec%60).toString().padStart(2,'0')}`;
+        }, 1000);
+
+        renderQuiz();
+    </script>
+</body>
+</html>

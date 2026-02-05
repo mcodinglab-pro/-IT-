@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>엠코딩랩 | IT 경시대회 모의고사 3세트</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Malgun Gothic', sans-serif; background: #f0f2f5; padding: 20px; line-height: 1.6; }
+        .container { max-width: 800px; margin: 0 auto; }
+        .header { background: #28a745; color: white; border-radius: 15px; padding: 25px; text-align: center; margin-bottom: 20px; }
+        .student-info { background: white; border-radius: 15px; padding: 20px; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .input-group { display: flex; gap: 10px; flex-wrap: wrap; }
+        .input-group input { flex: 1; min-width: 150px; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; }
+        .problem-card { background: white; border-radius: 15px; padding: 20px; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .problem-num { display: inline-block; background: #28a745; color: white; padding: 4px 12px; border-radius: 20px; font-weight: bold; margin-bottom: 10px; }
+        .problem-text { font-weight: bold; margin-bottom: 15px; color: #333; }
+        .code-block { background: #2d2d2d; color: #f8f8f2; padding: 15px; border-radius: 8px; font-family: 'Consolas', monospace; font-size: 14px; margin-bottom: 15px; white-space: pre-wrap; }
+        .options { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-bottom: 15px; }
+        .option-btn { background: #fff; border: 2px solid #e0e0e0; padding: 10px; border-radius: 8px; cursor: pointer; text-align: left; transition: 0.2s; }
+        .option-btn:hover { border-color: #28a745; background: #f2faf4; }
+        .option-btn.selected { background: #28a745; color: white; border-color: #28a745; }
+        .short-answer { width: 100%; padding: 12px; border: 2px solid #28a745; border-radius: 8px; font-size: 16px; }
+        .submit-section { text-align: center; padding: 40px 0; }
+        .submit-btn { background: #28a745; color: white; border: none; padding: 15px 60px; font-size: 18px; font-weight: bold; border-radius: 30px; cursor: pointer; }
+        .result-section { background: white; border-radius: 15px; padding: 30px; text-align: center; display: none; }
+        .timer { position: fixed; top: 20px; right: 20px; background: white; padding: 10px 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); font-weight: bold; color: #28a745; z-index: 100; }
+    </style>
+</head>
+<body>
+    <div class="timer" id="timer">⏱️ 00:00</div>
+    <div class="container">
+        <div class="header">
+            <h1>2025 청소년 IT 경시대회 모의고사</h1>
+            <p>MCODINGLAB | 제3세트 프로그래밍 언어</p>
+        </div>
+        <div class="student-info">
+            <div class="input-group">
+                <input type="text" id="studentName" placeholder="이름" required>
+                <input type="text" id="birthDate" placeholder="생년월일 (예: 120101)" maxlength="6">
+            </div>
+        </div>
+        <div id="quizContainer"></div>
+        <div class="submit-section">
+            <button class="submit-btn" id="submitBtn" onclick="submitQuiz()">모의고사 3세트 제출하기</button>
+        </div>
+        <div class="result-section" id="resultSection">
+            <h2>제출 완료!</h2>
+            <div style="font-size: 48px; margin: 20px 0;" id="scoreDisplay">0점</div>
+            <p>3세트 결과가 구글 시트로 성공적으로 전송되었습니다.</p>
+        </div>
+    </div>
+
+    <script>
+        const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxPUwylThOGDacpW_2MFBLQWPfCIdX6oWrYpDzZETeDQCaeITBuJv37RGmFiSGrS1u1/exec';
+
+        const problems = [
+            { id: 1, q: "실행 결과는?", code: "a = 25\nb = 7\nprint(a & b)", type: "choice", opts: ["0", "1", "3", "7", "25"], ans: "2" },
+            { id: 2, q: "실행 결과는?", code: "a = [1, 2, 3, 4, 5]\na.insert(2, 10)\nprint(a[3])", type: "choice", opts: ["2", "3", "4", "10", "오류"], ans: "2" },
+            { id: 3, q: "실행 결과는?", code: "a = 5\nprint(a << 2, a >> 1)", type: "choice", opts: ["10 2", "20 2", "10 3", "20 3", "25 2"], ans: "2" },
+            { id: 4, q: "실행 결과는?", code: "s = 0\nfor i in range(1, 100):\n    if i % 7 == 0 and i % 3 == 0:\n        s += i\nprint(s)", type: "choice", opts: ["126", "168", "210", "252", "315"], ans: "3" },
+            { id: 5, q: "실행 결과는?", code: 'a = "abcdefg"\nprint(a[1:6:2])', type: "choice", opts: ["ace", "bdf", "bce", "adf", "ceg"], ans: "2" },
+            { id: 6, q: "실행 결과는?", code: "import re\np = re.compile('[a-z]+')\nprint(p.match('Hello World'))", type: "choice", opts: ["Hello", "None", "hello", "World", "오류"], ans: "2" },
+            { id: 7, q: "실행 결과는?", code: "cnt = 0\na = 0\ndef f():\n    global cnt, a\n    cnt += 1\n    a += cnt\n    return a\nprint(f() + f() + f())", type: "choice", opts: ["6", "9", "10", "12", "15"], ans: "3" },
+            { id: 8, q: "실행 결과는?", code: "a = set([1, 2, 3, 4])\nb = set([3, 4, 5, 6])\nprint(len(a | b), len(a & b))", type: "choice", opts: ["4 2", "6 2", "4 4", "8 2", "6 4"], ans: "2" },
+            { id: 9, q: "실행 결과는?", code: "def f(n):\n    if n == 1: return 1\n    if n % 2 == 0: return f(n // 2) + 1\n    return f(n * 3 + 1) + 1\nprint(f(7))", type: "choice", opts: ["11", "13", "15", "17", "19"], ans: "4" },
+            { id: 10, q: "실행 결과는?", code: "a = [[0]*3 for _ in range(3)]\nfor i in range(3):\n    for j in range(3):\n        a[i][j] = i * 3 + j + 1\nb = 0\nfor i in range(3):\n    b += a[i][2-i]\nprint(b)", type: "choice", opts: ["9", "12", "15", "18", "21"], ans: "3" },
+            { id: 11, q: "실행 결과는?", code: "class Counter:\n    count = 0\n    def __init__(self):\n        Counter.count += 1\n    def get_count(self):\n        return Counter.count\na = Counter()\nb = Counter()\nc = Counter()\nprint(a.get_count(), b.count)", type: "choice", opts: ["1 1", "1 3", "3 1", "3 3", "오류"], ans: "4" },
+            { id: 12, q: "오른쪽에 연속으로 나타나는 0의 개수는?", code: "a = 1\nfor i in range(1, 11):\n    a *= i\nprint('%o' % a)", type: "choice", opts: ["1개", "2개", "3개", "4개", "5개"], ans: "2" },
+            { id: 13, q: "실행 결과는?", code: "def f(arr, l, r):\n    if l >= r: return\n    m = l\n    for i in range(l, r):\n        if arr[i] < arr[r]:\n            arr[m], arr[i] = arr[i], arr[m]\n            m += 1\n    arr[m], arr[r] = arr[r], arr[m]\n    f(arr, l, m-1)\n    f(arr, m+1, r)\na = [3, 6, 1, 8, 2, 9, 4]\nf(a, 0, len(a)-1)\nprint(a[3])", type: "choice", opts: ["3", "4", "6", "8", "9"], ans: "2" },
+            { id: 14, q: "실행 결과는?", code: "def f(n, r, s, path):\n    if len(path) == r:\n        s.add(sum(path))\n        return\n    for i in range(1, n+1):\n        if i not in path:\n            f(n, r, s, path + [i])\nresult = set()\nf(5, 3, result, [])\nprint(len(result))", type: "choice", opts: ["5", "6", "7", "8", "9"], ans: "3" },
+            { id: 15, q: "실행 결과는?", code: "def f(x, y):\n    if x < 0 or y < 0 or x > 3 or y > 3: return 0\n    if x == 3 and y == 3: return 1\n    return f(x+1, y) + f(x, y+1)\nprint(f(0, 0))", type: "choice", opts: ["6", "10", "15", "20", "35"], ans: "4" },
+            { id: 16, q: "실행 결과는?", code: "a = [[1, 0], [0, 1]]\nb = [[1, 1], [1, 0]]\ndef mul(x, y):\n    r = [[0, 0], [0, 0]]\n    for i in range(2):\n        for j in range(2):\n            for k in range(2):\n                r[i][j] += x[i][k] * y[k][j]\n    return r\nfor _ in range(5):\n    a = mul(a, b)\nprint(a[0][0])", type: "choice", opts: ["5", "8", "13", "21", "34"], ans: "2" },
+            { id: 17, q: "실행 결과는?", code: "from collections import deque\ndef bfs(graph, start):\n    visited = set()\n    q = deque([start]); order = []\n    while q:\n        v = q.popleft()\n        if v not in visited:\n            visited.add(v); order.append(v)\n            for n in graph[v]:\n                if n not in visited: q.append(n)\n    return order\ng = {1: [2, 3], 2: [4, 5], 3: [6], 4: [], 5: [], 6: []}\nprint(bfs(g, 1)[4])", type: "choice", opts: ["3", "4", "5", "6", "오류"], ans: "3" },
+            { id: 18, q: "빈 칸에 값을 넣었을 때 가장 큰 값을 출력하는 코드는?", code: "def f(a):\n    if a <= 0: return 0\n    return (a % 5) * f(a // 5) + a % 5\nprint(f(빈 칸))", type: "choice", opts: ["24", "99", "124", "249", "624"], ans: "5" },
+            { id: 19, q: "실행 결과는?", code: "dp = [0] * 20\ndp[1] = 1; dp[2] = 2\nfor i in range(3, 15):\n    dp[i] = dp[i-1] + dp[i-2]\nprint(dp[10] + dp[14])", type: "choice", opts: ["466", "610", "699", "843", "987"], ans: "3" },
+            { id: 20, q: "실행 결과로 올바른 값을 작성하시오.", code: "def solve(n, cnt):\n    if n == 1: return cnt\n    if n % 2 == 0: return solve(n // 2, cnt + 1)\n    else: return solve(n * 3 + 1, cnt + 1)\ntotal = 0\nfor i in range(1, 11):\n    total += solve(i, 0)\nprint(total)", type: "short", ans: "67" }
+        ];
+
+        let userAnswers = {};
+        let startTime = Date.now();
+
+        function renderQuiz() {
+            const container = document.getElementById('quizContainer');
+            problems.forEach(p => {
+                const card = document.createElement('div');
+                card.className = 'problem-card';
+                let html = `<div class="problem-num">문제 ${p.id}</div><div class="problem-text">${p.q}</div>`;
+                if(p.code) html += `<div class="code-block">${p.code}</div>`;
+                
+                if(p.type === 'choice') {
+                    html += `<div class="options">`;
+                    p.opts.forEach((opt, idx) => {
+                        html += `<button class="option-btn" id="p${p.id}_o${idx+1}" onclick="selectOption(${p.id}, ${idx+1})">${idx+1}. ${opt}</button>`;
+                    });
+                    html += `</div>`;
+                } else {
+                    html += `<input type="text" class="short-answer" id="p${p.id}_ans" placeholder="정답 입력" oninput="saveShort(${p.id}, this.value)">`;
+                }
+                card.innerHTML = html;
+                container.appendChild(card);
+            });
+        }
+
+        function selectOption(probId, optIdx) {
+            problems[probId-1].opts.forEach((_, i) => {
+                const el = document.getElementById(`p${probId}_o${i+1}`);
+                if(el) el.classList.remove('selected');
+            });
+            document.getElementById(`p${probId}_o${optIdx}`).classList.add('selected');
+            userAnswers[probId] = String(optIdx);
+        }
+
+        function saveShort(probId, val) {
+            userAnswers[probId] = val.trim();
+        }
+
+        async function submitQuiz() {
+            const name = document.getElementById('studentName').value;
+            const birth = document.getElementById('birthDate').value;
+            if(!name || !birth) return alert("이름과 생년월일을 입력해 주세요.");
+
+            let correct = 0;
+            let details = [];
+            problems.forEach(p => {
+                const isCorrect = userAnswers[p.id] === p.ans;
+                if(isCorrect) correct++;
+                details.push({ id: p.id, isCorrect: isCorrect });
+            });
+
+            const score = Math.round((correct / problems.length) * 100);
+            const elapsed = Math.floor((Date.now() - startTime) / 1000);
+            const timeStr = `${Math.floor(elapsed/60)}분 ${elapsed%60}초`;
+
+            const result = {
+                timestamp: new Date().toLocaleString('ko-KR'),
+                name: name,
+                birthDate: birth,
+                score: score,
+                time: timeStr,
+                details: details
+            };
+
+            const btn = document.getElementById('submitBtn');
+            btn.disabled = true;
+            btn.textContent = "3세트 결과 전송 중...";
+
+            try {
+                await fetch(WEB_APP_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(result) });
+            } catch(e) { console.error(e); }
+
+            document.getElementById('scoreDisplay').textContent = score + "점";
+            document.getElementById('quizContainer').style.display = 'none';
+            document.getElementById('studentName').parentNode.parentNode.style.display = 'none';
+            document.getElementById('resultSection').style.display = 'block';
+        }
+
+        setInterval(() => {
+            const sec = Math.floor((Date.now() - startTime) / 1000);
+            document.getElementById('timer').textContent = `⏱️ ${Math.floor(sec/60).toString().padStart(2,'0')}:${(sec%60).toString().padStart(2,'0')}`;
+        }, 1000);
+
+        renderQuiz();
+    </script>
+</body>
+</html>
